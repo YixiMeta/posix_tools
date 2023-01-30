@@ -4,6 +4,8 @@
 # Author: Jiaming Zhang
 # Change log:
 # 2023-01-30
+#   version 1.0.1
+#    * Added freebsd support
 #   version 1.0.0
 #    * First version!
 #    * Supported algorithm: md5, sha1sum, sha256sum
@@ -142,7 +144,7 @@ case $algm in
     case $system in
       darwin)
         funcCall='md5';;
-      debian|fedora|linux)
+      debian|freebsd|fedora|linux)
         funcCall='md5sum';;
       solaris)
         funcCall='digest -a md5';;
@@ -153,7 +155,7 @@ case $algm in
     case $system in
       darwin)
         funcCall='shasum -a 1';;
-      debian|fedora|linux)
+      debian|freebsd|fedora|linux)
         funcCall='sha1sum';;
       solaris)
         funcCall='digest -a sha1';;
@@ -164,7 +166,7 @@ case $algm in
     case $system in
       darwin)
         funcCall='shasum -a 256';;
-      debian|fedora|linux)
+      debian|freebsd|fedora|linux)
         funcCall='sha256sum';;
       solaris)
         funcCall='digest -a sha256';;
