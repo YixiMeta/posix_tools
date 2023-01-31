@@ -4,6 +4,8 @@
 # Author: Jiaming Zhang
 # Change log:
 # 2023-01-31
+#   version 1.1.2
+#     * Bug Fix
 #   version 1.1.1
 #     * Bug Fix
 #   version 1.1.0
@@ -20,12 +22,12 @@
 self="$(echo "$0" | sed -e 's,.*/,,')"
 usage() {
   printf "\033[7mUsage:\033[0m\n   \033[1m%s\033[0m [\033[1m-h\033[0m|\033[1m-?\
-\033[0m|\033[1m--help\033[0m] \033[1m-a\033[0m \033[4malgorithm\033[0m [\033[1m\
--f\033[0m|\033[1m--file\033[0m] \033[4mfileName\033[0m [\033[1m-H\033[0m|\033[1\
-m--hash\033[0m] \033[4mhash\033[0m\n\n\033[7mSupported algorithm:\033[0m\n   md\
-5\n   sha1sum\n   sha256sum\n\033[7mNotice:\033[0m\n   Please note that neither\
- of the supported hash algorithm is portable. However, They are usually present\
-ed on mordern OS.\n" "$self"
+\033[0m|\033[1m--help\033[0m] | \033[1m-a\033[0m \033[4malgorithm\033[0m [\033[\
+1m-f\033[0m|\033[1m--file\033[0m] \033[4mfileName\033[0m [\033[1m-H\033[0m|\033\
+[1m--hash\033[0m] \033[4mhash\033[0m\n\033[7mSupported algorithm:\033[0m\n   md\
+5\n   sha1sum\n   sha256sum\n   sha512sum\n\033[7mNotice:\033[0m\n   Please not\
+e that neither of the supported hash algorithm is portable. However, They are u\
+sually presented on mordern OS.\n" "$self"
 }
 die() {
   printf '\033[1m%s\033[0m\n' "$1" >&2
@@ -52,23 +54,23 @@ case "$OS" in
   'darwin'*)
     system='darwin'
     ;;
-  debian)
+  'debian')
     system='debian'
     ;;
-  fedora)
+  'fedora')
     system='fedora'
     ;;
   'freebsd'*)
     system='freebsd'
     ;;
-  'sunos'|solaris)
+  'sunos'|'solaris')
     system='solaris'
     PATH=$(getconf PATH):PATH
     ;;
   'windowsnt'|'msys'*|'cygwin'*)
     system='windows'
     ;;
-  linux|gnu|gnu/*)
+  'linux'|'gnu'|gnu/*)
     system='linux'
     ;;
   *)
@@ -153,52 +155,73 @@ fi
 case $algm in
   md5)
     case $system in
-      darwin)
-        funcCall='md5';;
-      debian|freebsd|fedora|linux)
-        funcCall='md5sum';;
-      solaris)
-        funcCall='digest -a md5';;
-      windows)
-        funcCall='md5sum';;
+      'darwin')
+        funcCall='md5'
+        funcName='md5';;
+      'debian'|'freebsd'|'fedora'|'linux')
+        funcCall='md5sum'
+        funcName='md5sum';;
+      'solaris')
+        funcCall='digest -a md5'
+        funcName='md5';;
+      'windows')
+        funcCall='md5sum'
+        funcName='md5sum';;
     esac;;
   sha1sum|sha1)
     case $system in
-      darwin)
-        funcCall='shasum -a 1';;
-      debian|freebsd|fedora|linux)
-        funcCall='sha1sum';;
-      solaris)
-        funcCall='digest -a sha1';;
-      windows)
-        funcCall='sha1sum';;
+      'darwin')
+        funcCall='shasum -a 1'
+        funcName='shasum';;
+      'debian'|'freebsd'|'fedora'|'linux')
+        funcCall='sha1sum'
+        funcName='sha1sum';;
+      'solaris')
+        funcCall='digest -a sha1'
+        funcName='sha1';;
+      'windows')
+        funcCall='sha1sum'
+        funcName='sha1sum';;
     esac;;
   sha256sum|sha256)
     case $system in
-      darwin)
-        funcCall='shasum -a 256';;
-      debian|freebsd|fedora|linux)
-        funcCall='sha256sum';;
-      solaris)
-        funcCall='digest -a sha256';;
-      windows)
-        funcCall='sha256sum';;
+      'darwin')
+        funcCall='shasum -a 256'
+        funcName='shasum';;
+      'debian'|'freebsd'|'fedora'|'linux')
+        funcCall='sha256sum'
+        funcName='sha256sum';;
+      'solaris')
+        funcCall='digest -a sha256'
+        funcName='sha256';;
+      'windows')
+        funcCall='sha256sum'
+        funcName='sha256sum';;
     esac;;
   sha512sum|sha512)
     case $system in
-      darwin)
-        funcCall='shasum -a 512';;
-      debian|freebsd|fedora|linux)
-        funcCall='sha512sum';;
-      solaris)
-        funcCall='digest -a sha512';;
-      windows)
-        funcCall='sha512sum';;
+      'darwin')
+        funcCall='shasum -a 512'
+        funcName='shasum';;
+      'debian'|'freebsd'|'fedora'|'linux')
+        funcCall='sha512sum'
+        funcName='sha512sum';;
+      'solaris')
+        funcCall='digest -a sha512'
+        funcName='sha512';;
+      'windows')
+        funcCall='sha512sum'
+        funcName='sha512sum';;
     esac;;
   *)
     die 'ERROR: Unknown or unsupported algorithm'
 esac
-if ! which $funcCall; then
+if [ $system == 'solaris' ]; then
+  check="$(digest -l | grep "$funcName")"
+else
+  check="$(which "$funcName")"
+fi
+if [ -z "$check" ] ; then
   printf "\033[1mERROR: The %s is either not available in your OS or uncallable\
  by this programme.\033[0m\n" "$algm" >&2
   exit 1

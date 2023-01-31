@@ -1,0 +1,31 @@
+.\" Manpage for integrity.
+.TH integrity 1 "31 Jan 2023" "1.1.2" "Manual for integrity"
+.SH NAME
+Integrity - Check for integrity of transferred files by hash
+.SH SYNOPSIS
+\fBintegrity\fR [\fB-h\fR|\fB-?\fR|\fB--help\fR] | \fB-a\fR \fIalgorithm\fR [\fB-f\fR|\fB--file\fR] \fIfile\fR [\fB-H\fR|\fB--hash\fR] \fIhash\fR
+.SH DESCRIPTION
+This programme compares the digest of file with the provided hash, if the hash match the digest, a standard message will be printed stating the match. If the digest of file does not match the digest, a warning message will be printed in bold (and red on supported CLI).
+.SH OPTIONS
+.TP
+.BR \fB-a\fR " " \fIalgorithm\fR =md5|sha1sum|sha1|sha256sum|sha256|sha512sum|sha512
+Algorithm to be used for hash calculation. Currently supported: md5, sha1sum, sha256sum and sha512sum. Please note that the availability of hash algorithm is also depends on the system.
+.TP
+.BR \fB-f\fR ", " \fB--file\fR " " \fIfile\fR
+A pathname of a file to be checked.
+.TP
+.BR \fB-H\fR ", " \fB--hash\fR " " \fIhash\fR
+A string of known hash to be compared.
+.TP
+.BR \fB-h\fR ", " \fB-?\fR ", " \fB--help\fR
+Display usage.
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Jiaming Zhang <J.Zhang@YixiMeta.com> is the author, and Yixi Meta is response for maintainance.
+.SH LICENCE
+The programme is licenced under AGPLv3. However, the equvients written in C or Python may be retrieved with a different licence.
+.SH SEE ALSO
+The programme written in C or Python is also available with another licence.
+.LP
+To check the file with a plain text file containing the known hash, you can usually archive by the hash utility itself.
