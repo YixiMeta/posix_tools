@@ -1,21 +1,74 @@
 #!/bin/sh
 # Check integrity of file with provided hash.
-# Copyright (c) 2023 Yixi Meta
+# Copyright (C) 2023 Yixi Meta
 # Author: Jiaming Zhang
 # Change log:
+# 2023-01-31
+#   version 1.1.0
+#     * Added notice to usage
+#     * Moved OS detection to the beginning of the programme
+#     * Added sha512sum
+#     * Added function check before call
 # 2023-01-30
 #   version 1.0.1
 #    * Added freebsd support
 #   version 1.0.0
 #    * First version!
 #    * Supported algorithm: md5, sha1sum, sha256sum
+
+# Detect OS
+if [ -f '/etc/os-release' ]; then
+  os_release='/etc/os-release'
+elif [ -f '/usr/lib/os-release' ]; then
+  os_release='/usr/lib/os-release'
+fi
+if [ -f "${os_release}" ]; then
+  OS="$(grep '^ID_LIKE=.*' "${os_release}" || grep 'ID=.*' "${os_release}")"
+  OS="${OS#*=}"
+  OS="${OS#\"}"
+  OS="${OS%\"}"
+  OS="${OS#\'}"
+  OS="${OS%\'}"
+  OS="$(echo "$OS" | tr '[:upper:]' '[:lower:]')"
+elif [ ! -f "${os_release}" ]; then
+  OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+fi
+case "$OS" in
+  'darwin'*)
+    system='darwin'
+    ;;
+  debian)
+    system='debian'
+    ;;
+  fedora)
+    system='fedora'
+    ;;
+  'freebsd'*)
+    system='freebsd'
+    ;;
+  'sunos'|solaris)
+    system='solaris'
+    PATH=$(getconf PATH):PATH
+    ;;
+  'windowsnt'|'msys'*|'cygwin'*)
+    system='windows'
+    ;;
+  linux|gnu|gnu/*)
+    system='linux'
+    ;;
+  *)
+    die 'ERROR: Unknown OS, this programme is uncompatible with your system!'
+esac
+
 self="$(echo "$0" | sed -e 's,.*/,,')"
 usage() {
   printf "\033[7mUsage:\033[0m\n   \033[1m%s\033[0m [\033[1m-h\033[0m|\033[1m-?\
 \033[0m|\033[1m--help\033[0m] \033[1m-a\033[0m \033[4malgorithm\033[0m [\033[1m\
 -f\033[0m|\033[1m--file\033[0m] \033[4mfileName\033[0m [\033[1m-H\033[0m|\033[1\
 m--hash\033[0m] \033[4mhash\033[0m\n\n\033[7mSupported algorithm:\033[0m\n   md\
-5\n   sha1sum\n   sha256sum\n" "$self"
+5\n   sha1sum\n   sha256sum\n\033[7mNotice:\033[0m\n   Please note that neither\
+ of the supported hash algorithm is portable. However, They are usually present\
+ed on mordern OS.\n" "$self"
 }
 die() {
   printf '\033[1m%s\033[0m\n' "$1" >&2
@@ -95,48 +148,6 @@ fi
 if [ "$file" == '' ] || [ "$hash" == '' ]; then
   die 'ERROR: File and hash to compare must be given.'
 fi
-# Detect OS
-if [ -f '/etc/os-release' ]; then
-  os_release='/etc/os-release'
-elif [ -f '/usr/lib/os-release' ]; then
-  os_release='/usr/lib/os-release'
-fi
-if [ -f "${os_release}" ]; then
-  OS="$(grep '^ID_LIKE=.*' "${os_release}" || grep 'ID=.*' "${os_release}")"
-  OS="${OS#*=}"
-  OS="${OS#\"}"
-  OS="${OS%\"}"
-  OS="${OS#\'}"
-  OS="${OS%\'}"
-  OS="$(echo "$OS" | tr '[:upper:]' '[:lower:]')"
-elif [ ! -f "${os_release}" ]; then
-  OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-fi
-case "$OS" in
-  'darwin'*)
-    system='darwin'
-    ;;
-  debian)
-    system='debian'
-    ;;
-  fedora)
-    system='fedora'
-    ;;
-  'freebsd'*)
-    system='freebsd'
-    ;;
-  'sunos')
-    system='solaris'
-    ;;
-  'windowsnt'|'msys'*|'cygwin'*)
-    system='windows'
-    ;;
-  linux|gnu|gnu/*)
-    system='linux'
-    ;;
-  *)
-    die 'ERROR: Unknown OS, this programme is uncompatible with your system!'
-esac
 
 # Main programme
 case $algm in
@@ -173,15 +184,30 @@ case $algm in
       windows)
         funcCall='sha256sum';;
     esac;;
+  sha512sum|sha512)
+    case $system in
+      darwin)
+        funcCall='shasum -a 512';;
+      debian|freebsd|fedora|linux)
+        funcCall='sha512sum';;
+      solaris)
+        funcCall='digest -a sha512';;
+      windows)
+        funcCall='sha512sum';;
+    esac;;
   *)
     die 'ERROR: Unknown or unsupported algorithm'
 esac
-
+if ! which $funcCall; then
+  printf "\033[1mERROR: The %s is either not available in your OS or uncallable\
+ by this programme.\033[0m\n" "$algm" >&2
+  exit 1
+fi
 digest="$($funcCall "$file" | sed "s;$file;;g" | sed 's; ;;g')"
 digest="${digest#*=}"
 if [ "$digest" == "$hash" ]; then
   printf 'INFO: Hash of \033[4m%s\033[0m match the given hash.\n' "$file"
 else
-  printf "\033[1mWARN: Hash of \033[4m%s\033[0;1m does NOT match the given hash\
-!\033[0m\n" "$file"
+  printf "\033[1;31mWARN: Hash of \033[4m%s\033[0;1m does NOT match the given h\
+ash!\033[0m\n" "$file"
 fi
