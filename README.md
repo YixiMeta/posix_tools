@@ -27,6 +27,7 @@ Most of the utilities in this repo has also C / Python alternatives, which is no
 You may open an issue at [this repo's GitHub mirror](https://github.com/YixiMeta/posix_tools/).
 
 ## Acknowledgement
+* This project is not a commercial product.
 * The `Makefile` for manpage is adapted from the `Makefile` included in `man-pages-posix-2017`, an original copyright notice is attached to the `man/Makefile`.
 * 'POSIX' is also a trademark of the IEEE. This project is not affiliated nor supported by IEEE.
 
